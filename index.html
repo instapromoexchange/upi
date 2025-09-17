@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Instapromo Exchange — Admin Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    :root{--primary:#4361ee;--secondary:#3a0ca3;--accent:#f72585;--light:#f8f9fa;--dark:#111827;--danger:#dc3545;--success:#28a745;--warning:#ffc107}
+    body{background:#f6f8ff;color:var(--dark);min-height:100vh;line-height:1.6}
+    .container{width:100%;max-width:1400px;margin:0 auto;padding:0 16px}
+    header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+    .header-content{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+    .logo{display:flex;align-items:center;gap:10px;cursor:pointer;}
+    .logo h1{font-size:1.3rem}
+    nav ul{list-style:none;display:flex;gap:14px;align-items:center}
+    nav a{color:#fff;text-decoration:none;padding:6px 10px;border-radius:8px;font-weight:600}
+    nav a:hover{background:rgba(255,255,255,.18)}
+    .admin-login{max-width:400px;margin:100px auto;padding:20px;background:#fff;border-radius:14px;box-shadow:0 12px 28px rgba(0,0,0,.08)}
+    .admin-login h2{text-align:center;margin-bottom:20px;color:var(--primary)}
+    .fg{margin-bottom:12px; position: relative;}
+    .fg label{display:block;font-weight:700;margin-bottom:6px}
+    .fc{width:100%;padding:12px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+    .fc:focus{outline:none;box-shadow:0 0 0 3px rgba(67,97,238,.18)}
+    .btn{display:inline-block;padding:11px 20px;background:var(--accent);color:#fff;border-radius:999px;text-decoration:none;font-weight:800;cursor:pointer;border:0}
+    .btn:hover{filter:brightness(.95);transform:translateY(-1px)}
+    .btn-danger{background:var(--danger)}
+    .btn-success{background:var(--success)}
+    .btn-warning{background:var(--warning);color:#000}
+    .password-container{position: relative;display: flex;align-items: center;}
+    .password-toggle{position: absolute;right: 12px;cursor: pointer;color: #6b7280;transition: all 0.3s ease;background: none;border: none;padding: 4px;border-radius: 50%;display: flex;align-items: center;justify-content: center;}
+    .password-toggle:hover{color: var(--primary);background-color: rgba(67, 97, 238, 0.1);}
+    .password-toggle:active{transform: scale(0.95);}
+    .password-toggle i{font-size: 1.1rem;transition: transform 0.3s ease;}
+    .password-toggle.active i{transform: rotate(10deg);}
+    .admin-dashboard{display:none;padding:20px 0}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px}
+    .stat{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 10px 24px rgba(0,0,0,.08)}
+    .stat i{font-size:1.8rem;color:var(--primary);margin-bottom:6px}
+    .section-title{text-align:center;margin-bottom:26px}
+    .section-title h2{color:var(--primary);margin-bottom:8px}
+    .card{background:#fff;border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.08);overflow:hidden;margin-bottom:20px}
+    .card-header{padding:14px 16px;background:var(--primary);color:#fff;display:flex;justify-content:space-between;align-items:center}
+    .card-body{padding:16px}
+    table{width:100%;border-collapse:collapse}
+    th, td{padding:12px;text-align:left;border-bottom:1px solid #e5e7eb}
+    th{background:#f3f4f6;font-weight:700}
+    tr:hover{background:#f9fafb}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #e5e7eb;margin-bottom:12px}
+    .tab{padding:8px 12px;background:#f3f4f6;border-radius:8px 8px 0 0;cursor:pointer;font-weight:700}
+    .tab.active{background:#fff;border:1px solid #e5e7eb;border-bottom:0;color:var(--primary)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .status{display:none;margin:0 auto 14px;max-width:520px;padding:12px 14px;border-radius:10px;font-weight:700}
+    .status.show{display:block}
+    .status.ok{background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.35);color:#065f46}
+    .status.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#7f1d1d}
+    .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+    .badge-success{background:rgba(16,185,129,.14);color:#065f46}
+    .badge-warning{background:rgba(245,158,11,.14);color:#854d0e}
+    .badge-danger{background:rgba(239,68,68,.12);color:#7f1d1d}
+    .badge-info{background:rgba(59,130,246,.14);color:#1e40af}
+    .action-btn{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:6px;cursor:pointer;border:none;font-weight:600;margin-right:5px}
+    .action-btn i{margin-right:4px}
+    .btn-approve{background:var(--success);color:#fff}
+    .btn-reject{background:var(--danger);color:#fff}
+    .btn-view{background:var(--primary);color:#fff}
+    .btn-edit{background:var(--warning);color:#000}
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+    .modal.show{display:flex}
+    .modal-content{background:#fff;border-radius:14px;padding:20px;width:90%;max-width:600px;max-height:80vh;overflow:auto}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #e5e7eb}
+    .modal-close{background:none;border:none;font-size:24px;cursor:pointer}
+    .search-container{margin-bottom:16px;display:flex;gap:10px}
+    .search-container input{flex:1}
+    .pagination{display:flex;justify-content:center;margin-top:20px;gap:8px}
+    .pagination button{padding:8px 12px;border:1px solid #e5e7eb;background:#fff;border-radius:6px;cursor:pointer}
+    .pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .pagination button:hover:not(.active){background:#f3f4f6}
+    .method-details {background: #f9fafb;padding: 10px;border-radius: 8px;margin-top: 5px;font-size: 0.9rem;}
+    .method-details p {margin: 4px 0;}
+    @media (max-width:768px){.stats{grid-template-columns:1fr 1fr}.card-header{flex-direction:column;align-items:flex-start;gap:10px}}
+    @media (max-width:576px){.stats{grid-template-columns:1fr}.admin-login{margin:50px auto;padding:15px}}
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <i class="fa-solid fa-exchange-alt"></i><h1>Instapromo Exchange Admin</h1>
+      </div>
+      <nav>
+        <ul id="nav">
+          <li id="nav-logout" style="display:none"><a href="#" id="logout">Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Toast -->
+  <div id="status" class="status"></div>
+
+  <!-- Admin Login -->
+  <div id="admin-login" class="admin-login">
+    <h2><i class="fa-solid fa-lock"></i> Admin Login</h2>
+    <div class="fg">
+      <label>Email</label>
+      <input id="admin-email" type="email" class="fc" placeholder="admin@example.com" value="rudrchauhan877@gmail.com">
+    </div>
+    <div class="fg">
+      <label>Password</label>
+      <div class="password-container">
+        <input id="admin-pass" type="password" class="fc" placeholder="******">
+        <button type="button" class="password-toggle" id="admin-pass-toggle">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+    </div>
+    <button class="btn" style="width:100%" id="btn-admin-login">Login</button>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="admin-dashboard" class="admin-dashboard container">
+    <div class="section-title">
+      <h2>Admin Dashboard</h2>
+      <p>Manage users, submissions, and withdrawals</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><i class="fa-solid fa-users"></i><h3 id="total-users">0</h3><p>Total Users</p></div>
+      <div class="stat"><i class="fa-solid fa-list"></i><h3 id="total-submissions">0</h3><p>Total Submissions</p></div>
+      <div class="stat"><i class="fa-solid fa-hourglass-half"></i><h3 id="pending-submissions">0</h3><p>Pending Submissions</p></div>
+      <div class="stat"><i class="fa-solid fa-money-bill-wave"></i><h3 id="pending-withdrawals">0</h3><p>Pending Withdrawals</p></div>
+      <div class="stat"><i class="fa-solid fa-indian-rupee-sign"></i><h3 id="total-earnings">₹0</h3><p>Total Earnings</p></div>
+      <div class="stat"><i class="fa-solid fa-envelope"></i><h3 id="unread-messages">0</h3><p>Unread Messages</p></div>
+    </div>
+
+    <div class="tabs" id="admin-tabs">
+      <div class="tab active" data-tab="tab-users">Users</div>
+      <div class="tab" data-tab="tab-submissions">Submissions</div>
+      <div class="tab" data-tab="tab-withdrawals">Withdrawals</div>
+      <div class="tab" data-tab="tab-messages">Messages</div>
+      <div class="tab" data-tab="tab-brands">Brands</div>
+      <div class="tab" data-tab="tab-campaigns">Campaigns</div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="tab-users" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h3>User Management</h3>
+          <div class="search-container">
+            <input type="text" id="user-search" class="fc" placeholder="Search users...">
+            <button class="btn" id="btn-refresh-users"><i class="fas fa-sync-alt"></i> Refresh</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Followers</th>
+                  <th>Social Profile</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="users-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submissions Tab -->
+    <div id="tab-submissions" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>Content Submissions</h3>
+          <div class="search-container">
+            <input type="text" id="submission-search" class="fc" placeholder="Search submissions...">
+            <select id="submission-filter" class="fc">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Type</th>
+                  <th>Link</th>
+                  <th>Status</th>
+                  <th>Earnings</th>
+                  <th>Submitted</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="submissions-table-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="submissions-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Withdrawals Tab -->
+    <div id="tab-withdrawals" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>Withdrawal Requests</h3>
+          <div class="search-container">
+            <input type="text" id="withdrawal-search" class="fc" placeholder="Search withdrawals...">
+            <select id="withdrawal-filter" class="fc">
+              <option value="all">All Status</option>
+              <option value="requested">Requested</option>
+              <option value="processing">Processing</option>
+              <option value="completed">Completed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Method</th>
+                  <th>Method Details</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Requested</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="withdrawals-table-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="withdrawals-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages Tab -->
+    <div id="tab-messages" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>Contact Messages</h3>
+          <div class="search-container">
+            <input type="text" id="message-search" class="fc" placeholder="Search messages...">
+            <button class="btn" id="btn-mark-all-read"><i class="fas fa-check-double"></i> Mark All Read</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Company</th>
+                  <th>Email</th>
+                  <th>Message</th>
+                  <th>Received</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="messages-table-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="messages-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brands Tab -->
+    <div id="tab-brands" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>Brand Management</h3>
+          <button class="btn" id="btn-add-brand"><i class="fas fa-plus"></i> Add Brand</button>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Campaigns</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="brands-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaigns Tab -->
+    <div id="tab-campaigns" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h3>Campaign Management</h3>
+          <button class="btn" id="btn-add-campaign"><i class="fas fa-plus"></i> Add Campaign</button>
+        </div>
+        <div class="card-body">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>Brand</th>
+                  <th>Title</th>
+                  <th>Payout</th>
+                  <th>Requirements</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="campaigns-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Detail Modal -->
+  <div class="modal" id="submission-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Submission Details</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="fg">
+          <label>User</label>
+          <input type="text" id="modal-user" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>Content Type</label>
+          <input type="text" id="modal-type" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>Content Link</label>
+          <input type="text" id="modal-link" class="fc" readonly>
+          <div style="margin-top:8px">
+            <a href="#" id="modal-link-anchor" target="_blank" class="btn">View Content</a>
+          </div>
+        </div>
+        <div class="fg">
+          <label>Status</label>
+          <select id="modal-status" class="fc">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Earnings (₹)</label>
+          <input type="number" id="modal-earnings" class="fc" min="0">
+        </div>
+        <div class="fg">
+          <label>Admin Notes</label>
+          <textarea id="modal-notes" class="fc" rows="3"></textarea>
+        </div>
+        <button class="btn btn-success" id="btn-save-submission" style="width:100%">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdrawal Detail Modal -->
+  <div class="modal" id="withdrawal-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Withdrawal Details</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="fg">
+          <label>User ID</label>
+          <input type="text" id="modal-withdrawal-userid" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>User Name</label>
+          <input type="text" id="modal-withdrawal-username" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>User Email</label>
+          <input type="text" id="modal-withdrawal-email" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>Method</label>
+          <input type="text" id="modal-withdrawal-method" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>Method Details</label>
+          <div id="modal-withdrawal-method-details" class="method-details"></div>
+        </div>
+        <div class="fg">
+          <label>Amount (₹)</label>
+          <input type="text" id="modal-withdrawal-amount" class="fc" readonly>
+        </div>
+        <div class="fg">
+          <label>Status</label>
+          <select id="modal-withdrawal-status" class="fc">
+            <option value="requested">Requested</option>
+            <option value="processing">Processing</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Requested At</label>
+          <input type="text" id="modal-withdrawal-requested" class="fc" readonly>
+        </div>
+        <button class="btn btn-success" id="btn-save-withdrawal" style="width:100%">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Brand Modal -->
+  <div class="modal" id="brand-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="brand-modal-title">Add New Brand</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="fg">
+          <label>Brand Name</label>
+          <input type="text" id="brand-name" class="fc" placeholder="Enter brand name">
+        </div>
+        <div class="fg">
+          <label>Description</label>
+          <textarea id="brand-description" class="fc" rows="3" placeholder="Enter brand description"></textarea>
+        </div>
+        <div class="fg">
+          <label>Category</label>
+          <input type="text" id="brand-category" class="fc" placeholder="Enter category">
+        </div>
+        <button class="btn btn-success" id="btn-save-brand" style="width:100%">Save Brand</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Campaign Modal -->
+  <div class="modal" id="campaign-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="campaign-modal-title">Add New Campaign</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="fg">
+          <label>Brand</label>
+          <select id="campaign-brand" class="fc">
+            <option value="">Select a brand</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Title</label>
+          <input type="text" id="campaign-title" class="fc" placeholder="Enter campaign title">
+        </div>
+        <div class="fg">
+          <label>Payout (₹)</label>
+          <input type="number" id="campaign-payout" class="fc" min="0" placeholder="Enter payout amount">
+        </div>
+        <div class="fg">
+          <label>Requirements</label>
+          <textarea id="campaign-requirements" class="fc" rows="3" placeholder="Enter campaign requirements"></textarea>
+        </div>
+        <div class="fg">
+          <label>Status</label>
+          <select id="campaign-status" class="fc">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <button class="btn btn-success" id="btn-save-campaign" style="width:100%">Save Campaign</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
+
+  <script>
+    /**************************************************************************
+     * Firebase configuration - keep as-is (from your project)
+     **************************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyBm4VTr__mag1trF4jPZCgqt7gWwBItD58",
+      authDomain: "exchange-a725e.firebaseapp.com",
+      databaseURL: "https://exchange-a725e-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "exchange-a725e",
+      storageBucket: "exchange-a725e.firebasestorage.app",
+      messagingSenderId: "47165517524",
+      appId: "1:47165517524:web:7712aae884de7a498a1541"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // Globals
+    let currentUser = null;
+    let currentSubmissionId = null;
+    let currentWithdrawalId = null;
+    const itemsPerPage = 10;
+    let currentUsersPage = 1;
+    let currentSubmissionsPage = 1;
+    let currentWithdrawalsPage = 1;
+    let currentMessagesPage = 1;
+
+    // Helper: safe default
+    function safe(val, def = 'N/A') { return (val === undefined || val === null) ? def : val; }
+
+    // Show toast/status
+    function showStatus(message, type = 'ok') {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = message;
+      statusEl.className = `status show ${type}`;
+      setTimeout(() => {
+        // remove show but keep classes consistent
+        statusEl.className = 'status';
+      }, 3000);
+    }
+
+    // Password toggle
+    function setupPasswordToggle(toggleId, inputId) {
+      const toggle = document.getElementById(toggleId);
+      const input = document.getElementById(inputId);
+      if (!toggle || !input) return;
+      toggle.addEventListener('click', () => {
+        if (input.type === 'password') {
+          input.type = 'text';
+          toggle.classList.add('active');
+          toggle.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+          input.type = 'password';
+          toggle.classList.remove('active');
+          toggle.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+      });
+    }
+
+    // Date formatter
+    function formatDate(timestamp) {
+      if (!timestamp) return '-';
+      const date = new Date(Number(timestamp));
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    }
+
+    // Status badge
+    function getStatusBadge(status) {
+      switch ((status || '').toString().toLowerCase()) {
+        case 'approved':
+        case 'completed':
+          return '<span class="badge badge-success">Approved</span>';
+        case 'pending':
+        case 'requested':
+          return '<span class="badge badge-warning">Pending</span>';
+        case 'rejected':
+          return '<span class="badge badge-danger">Rejected</span>';
+        case 'processing':
+          return '<span class="badge badge-info">Processing</span>';
+        default:
+          return '<span class="badge">Unknown</span>';
+      }
+    }
+
+    // Format method details (safe)
+    function formatMethodDetails(method, details) {
+      if (!details || typeof details !== 'object') return '<p>No details provided</p>';
+      let html = '';
+      const m = (method || '').toLowerCase();
+      if (m === 'upi') {
+        html = `<p><strong>Name:</strong> ${safe(details.name)}</p><p><strong>UPI ID:</strong> ${safe(details.upiId)}</p>`;
+      } else if (m === 'bank') {
+        html = `<p><strong>Name:</strong> ${safe(details.name)}</p>
+                <p><strong>Account Number:</strong> ${safe(details.accountNumber)}</p>
+                <p><strong>IFSC:</strong> ${safe(details.ifsc)}</p>
+                <p><strong>Phone:</strong> ${safe(details.phone)}</p>`;
+      } else if (m === 'paypal') {
+        html = `<p><strong>Email:</strong> ${safe(details.email)}</p>`;
+      } else {
+        // generic: list keys
+        for (const key in details) {
+          if (Object.prototype.hasOwnProperty.call(details, key)) {
+            html += `<p><strong>${key}:</strong> ${safe(details[key])}</p>`;
+          }
+        }
+      }
+      return html || '<p>No details provided</p>';
+    }
+
+    /**************************************************************************
+     * Authentication (login / logout)
+     **************************************************************************/
+    document.getElementById('btn-admin-login').addEventListener('click', () => {
+      const email = (document.getElementById('admin-email')?.value || '').trim();
+      const password = (document.getElementById('admin-pass')?.value || '').trim();
+      if (!email || !password) {
+        showStatus('Please enter email and password', 'err');
+        return;
+      }
+      auth.signInWithEmailAndPassword(email, password)
+        .then((cred) => {
+          currentUser = cred.user;
+          if (currentUser && currentUser.email && currentUser.email.toLowerCase() === 'rudrchauhan877@gmail.com') {
+            showStatus('Admin login successful!', 'ok');
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-dashboard').style.display = 'block';
+            document.getElementById('nav-logout').style.display = 'list-item';
+            loadDashboardData();
+          } else {
+            // not admin - signout
+            auth.signOut();
+            showStatus('Access denied. Admin privileges required.', 'err');
+          }
+        })
+        .catch((err) => {
+          showStatus(err.message || 'Login failed', 'err');
+          console.error('Login error:', err);
+        });
+    });
+
+    // Logout
+    document.getElementById('logout').addEventListener('click', (e) => {
+      e.preventDefault();
+      auth.signOut().then(() => {
+        showStatus('Logged out successfully', 'ok');
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-dashboard').style.display = 'none';
+        document.getElementById('nav-logout').style.display = 'none';
+      }).catch(err => {
+        showStatus(err.message || 'Logout failed', 'err');
+      });
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        const el = document.getElementById(tabId);
+        if (el) el.classList.add('active');
+
+        // load relevant data
+        if (tabId === 'tab-users') loadUsers();
+        if (tabId === 'tab-submissions') loadSubmissions();
+        if (tabId === 'tab-withdrawals') loadWithdrawals();
+        if (tabId === 'tab-messages') loadMessages();
+        if (tabId === 'tab-brands') loadBrands();
+        if (tabId === 'tab-campaigns') loadCampaigns();
+      });
+    });
+
+    // Modals: close buttons
+    document.querySelectorAll('.modal-close').forEach(closeBtn => {
+      closeBtn.addEventListener('click', () => {
+        const modal = closeBtn.closest('.modal');
+        if (modal) modal.classList.remove('show');
+      });
+    });
+    // Close when clicking backdrop
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+      });
+    });
+
+    /**************************************************************************
+     * Dashboard stats + initial load
+     **************************************************************************/
+    function loadDashboardData() {
+      // Users count
+      database.ref('users').once('value').then(snapshot => {
+        const totalUsers = snapshot ? snapshot.numChildren() : 0;
+        document.getElementById('total-users').textContent = totalUsers;
+      }).catch(err => {
+        console.error('Error loading users count:', err);
+      });
+
+      // Submissions: total & pending
+      database.ref('submissions').once('value').then(snapshot => {
+        let totalSubmissions = 0;
+        let pendingSubmissions = 0;
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            // userSnapshot may be a collection of submissions
+            const countForUser = userSnapshot ? userSnapshot.numChildren() : 0;
+            totalSubmissions += countForUser;
+            userSnapshot.forEach(sub => {
+              const st = (sub.val && sub.val().status) ? sub.val().status : ((sub.val && sub.val().status) || '');
+              if ((st || '').toString().toLowerCase() === 'pending') pendingSubmissions++;
+            });
+          });
+        }
+        document.getElementById('total-submissions').textContent = totalSubmissions;
+        document.getElementById('pending-submissions').textContent = pendingSubmissions;
+        // approximate earnings shown below after computing totalSubmissions
+        document.getElementById('total-earnings').textContent = '₹' + (totalSubmissions * 100).toLocaleString();
+      }).catch(err => { console.error('Error loading submissions:', err); });
+
+      // Withdrawals pending
+      database.ref('withdrawals').once('value').then(snapshot => {
+        let pendingWithdrawals = 0;
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            userSnapshot.forEach(w => {
+              const st = (w.val && w.val().status) ? w.val().status : '';
+              if ((st || '').toString().toLowerCase() === 'requested') pendingWithdrawals++;
+            });
+          });
+        }
+        document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
+      }).catch(err => { console.error('Error loading withdrawals:', err); });
+
+      // Messages unread
+      database.ref('contactMessages').once('value').then(snapshot => {
+        let unread = 0;
+        if (snapshot) {
+          snapshot.forEach(ms => {
+            const m = ms.val ? ms.val() : {};
+            if (!m.read) unread++;
+          });
+        }
+        document.getElementById('unread-messages').textContent = unread;
+      }).catch(err => { console.error('Error loading messages count:', err); });
+
+      // Load active tab's data (users by default)
+      loadUsers();
+    }
+
+    /**************************************************************************
+     * USERS
+     **************************************************************************/
+    function loadUsers(page = 1) {
+      currentUsersPage = page;
+      const usersTable = document.getElementById('users-table-body');
+      usersTable.innerHTML = '<tr><td colspan="6" style="text-align:center">Loading users...</td></tr>';
+
+      database.ref('users').once('value').then(snapshot => {
+        const users = [];
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            const u = (userSnapshot.val && userSnapshot.val()) || {};
+            u.id = userSnapshot.key;
+            users.push(u);
+          });
+        }
+
+        const searchTerm = (document.getElementById('user-search')?.value || '').toLowerCase();
+        const filtered = searchTerm ? users.filter(user =>
+          ((user.name || '').toLowerCase().includes(searchTerm)) ||
+          ((user.email || '').toLowerCase().includes(searchTerm))
+        ) : users;
+
+        // pagination
+        const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+        const startIndex = (page - 1) * itemsPerPage;
+        const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+        usersTable.innerHTML = '';
+        if (paginated.length === 0) {
+          usersTable.innerHTML = '<tr><td colspan="6" style="text-align:center">No users found</td></tr>';
+        } else {
+          paginated.forEach(user => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${safe(user.name)}</td>
+              <td>${safe(user.email)}</td>
+              <td>${safe(user.followers, 0)}</td>
+              <td>${safe(user.socialProfile)}</td>
+              <td>${formatDate(user.createdAt)}</td>
+              <td>
+                <button class="action-btn btn-view" data-id="${safe(user.id, '')}"><i class="fas fa-eye"></i> View</button>
+              </td>
+            `;
+            usersTable.appendChild(row);
+          });
+
+          // View buttons (example handler — expand as needed)
+          usersTable.querySelectorAll('.btn-view').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const uid = btn.getAttribute('data-id');
+              // Optionally open a user detail modal or console.log
+              showStatus('View user: ' + uid, 'ok');
+            });
+          });
+        }
+
+        setupPagination('users-pagination', page, totalPages, loadUsers);
+      }).catch(err => {
+        console.error('Error loading users:', err);
+        usersTable.innerHTML = '<tr><td colspan="6" style="text-align:center">Error loading users</td></tr>';
+      });
+    }
+
+    /**************************************************************************
+     * SUBMISSIONS
+     **************************************************************************/
+    function loadSubmissions(page = 1) {
+      currentSubmissionsPage = page;
+      const submissionsTable = document.getElementById('submissions-table-body');
+      submissionsTable.innerHTML = '<tr><td colspan="7" style="text-align:center">Loading submissions...</td></tr>';
+
+      database.ref('submissions').once('value').then(snapshot => {
+        const submissions = [];
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            userSnapshot.forEach(subSnapshot => {
+              const s = (subSnapshot.val && subSnapshot.val()) || {};
+              s.id = subSnapshot.key;
+              s.userId = userSnapshot.key;
+              submissions.push(s);
+            });
+          });
+        }
+
+        const searchTerm = (document.getElementById('submission-search')?.value || '').toLowerCase();
+        const statusFilter = (document.getElementById('submission-filter')?.value || 'all');
+
+        let filtered = submissions;
+        if (searchTerm) {
+          filtered = filtered.filter(sub =>
+            ((sub.userName || '').toLowerCase().includes(searchTerm)) ||
+            ((sub.type || '').toLowerCase().includes(searchTerm))
+          );
+        }
+        if (statusFilter !== 'all') {
+          filtered = filtered.filter(sub => ((sub.status || '').toString().toLowerCase()) === statusFilter.toString().toLowerCase());
+        }
+
+        const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+        const startIndex = (page - 1) * itemsPerPage;
+        const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+        submissionsTable.innerHTML = '';
+        if (paginated.length === 0) {
+          submissionsTable.innerHTML = '<tr><td colspan="7" style="text-align:center">No submissions found</td></tr>';
+        } else {
+          paginated.forEach(sub => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${safe(sub.userName, 'Unknown User')}</td>
+              <td>${safe(sub.type)}</td>
+              <td>${sub.link ? `<a href="${sub.link}" target="_blank">View</a>` : 'N/A'}</td>
+              <td>${getStatusBadge(sub.status)}</td>
+              <td>₹${safe(sub.earnings, 0)}</td>
+              <td>${formatDate(sub.submittedAt)}</td>
+              <td>
+                <button class="action-btn btn-view view-submission" data-id="${safe(sub.id, '')}" data-userid="${safe(sub.userId, '')}"><i class="fas fa-eye"></i> Review</button>
+              </td>
+            `;
+            submissionsTable.appendChild(row);
+          });
+
+          // attach listeners
+          document.querySelectorAll('.view-submission').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const submissionId = btn.getAttribute('data-id');
+              const userId = btn.getAttribute('data-userid');
+              if (userId && submissionId) viewSubmission(userId, submissionId);
+              else showStatus('Invalid submission reference', 'err');
+            });
+          });
+        }
+
+        setupPagination('submissions-pagination', page, totalPages, loadSubmissions);
+      }).catch(err => {
+        console.error('Error loading submissions:', err);
+        submissionsTable.innerHTML = '<tr><td colspan="7" style="text-align:center">Error loading submissions</td></tr>';
+      });
+    }
+
+    // View a single submission
+    function viewSubmission(userId, submissionId) {
+      database.ref(`submissions/${userId}/${submissionId}`).once('value').then(snap => {
+        const submission = (snap && snap.val()) || null;
+        if (!submission) {
+          showStatus('Submission not found', 'err');
+          return;
+        }
+        currentSubmissionId = submissionId;
+        document.getElementById('modal-user').value = safe(submission.userName, 'Unknown User');
+        document.getElementById('modal-type').value = safe(submission.type, 'N/A');
+        document.getElementById('modal-link').value = safe(submission.link, '');
+        document.getElementById('modal-link-anchor').href = submission.link || '#';
+        document.getElementById('modal-status').value = submission.status || 'pending';
+        document.getElementById('modal-earnings').value = submission.earnings || 0;
+        document.getElementById('modal-notes').value = submission.adminNotes || '';
+        document.getElementById('submission-modal').classList.add('show');
+      }).catch(err => {
+        console.error('Error loading submission:', err);
+        showStatus('Error loading submission details', 'err');
+      });
+    }
+
+    // Save submission changes
+    document.getElementById('btn-save-submission').addEventListener('click', () => {
+      if (!currentSubmissionId) {
+        showStatus('No submission selected', 'err');
+        return;
+      }
+      const status = document.getElementById('modal-status')?.value || 'pending';
+      const earnings = Number(document.getElementById('modal-earnings')?.value || 0);
+      const notes = document.getElementById('modal-notes')?.value || '';
+
+      // Find owner (scan submissions nodes)
+      database.ref('submissions').once('value').then(snapshot => {
+        let ownerId = null;
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            if (userSnapshot.hasChild && userSnapshot.hasChild(currentSubmissionId)) {
+              ownerId = userSnapshot.key;
+            }
+          });
+        }
+        if (!ownerId) {
+          showStatus('Error: Could not find submission owner', 'err');
+          return;
+        }
+
+        const updates = {
+          status: status,
+          earnings: earnings,
+          adminNotes: notes,
+          reviewedAt: Date.now()
+        };
+
+        database.ref(`submissions/${ownerId}/${currentSubmissionId}`).update(updates)
+          .then(() => {
+            showStatus('Submission updated successfully', 'ok');
+            document.getElementById('submission-modal').classList.remove('show');
+            loadSubmissions(currentSubmissionsPage);
+            loadDashboardData();
+          })
+          .catch(err => {
+            console.error('Error updating submission:', err);
+            showStatus('Error updating submission', 'err');
+          });
+      }).catch(err => {
+        console.error('Error finding submission owner:', err);
+        showStatus('Error updating submission', 'err');
+      });
+    });
+
+    /**************************************************************************
+     * WITHDRAWALS
+     **************************************************************************/
+    function loadWithdrawals(page = 1) {
+      currentWithdrawalsPage = page;
+      const withdrawalsTable = document.getElementById('withdrawals-table-body');
+      withdrawalsTable.innerHTML = '<tr><td colspan="9" style="text-align:center">Loading withdrawals...</td></tr>';
+
+      database.ref('withdrawals').once('value').then(snapshot => {
+        const withdrawals = [];
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            userSnapshot.forEach(wsnap => {
+              const w = (wsnap.val && wsnap.val()) || {};
+              w.id = wsnap.key;
+              w.userId = userSnapshot.key;
+              withdrawals.push(w);
+            });
+          });
+        }
+
+        const searchTerm = (document.getElementById('withdrawal-search')?.value || '').toLowerCase();
+        const statusFilter = (document.getElementById('withdrawal-filter')?.value || 'all');
+
+        let filtered = withdrawals;
+        if (searchTerm) {
+          filtered = filtered.filter(w =>
+            ((w.userName || '').toLowerCase().includes(searchTerm)) ||
+            ((w.userEmail || '').toLowerCase().includes(searchTerm)) ||
+            ((w.method || '').toLowerCase().includes(searchTerm))
+          );
+        }
+        if (statusFilter !== 'all') {
+          filtered = filtered.filter(w => ((w.status || '').toString().toLowerCase()) === statusFilter.toString().toLowerCase());
+        }
+
+        const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+        const startIndex = (page - 1) * itemsPerPage;
+        const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+        withdrawalsTable.innerHTML = '';
+        if (paginated.length === 0) {
+          withdrawalsTable.innerHTML = '<tr><td colspan="9" style="text-align:center">No withdrawals found</td></tr>';
+        } else {
+          paginated.forEach(w => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${safe(w.userId)}</td>
+              <td>${safe(w.userName, 'Unknown User')}</td>
+              <td>${safe(w.userEmail)}</td>
+              <td>${safe((w.method || '').toString().toUpperCase(), 'N/A')}</td>
+              <td>
+                <div class="method-details">
+                  ${formatMethodDetails(w.method, w.methodDetails || {})}
+                </div>
+              </td>
+              <td>₹${safe(w.amount, 0)}</td>
+              <td>${getStatusBadge(w.status)}</td>
+              <td>${formatDate(w.requestedAt)}</td>
+              <td>
+                <button class="action-btn btn-view view-withdrawal" data-id="${safe(w.id, '')}" data-userid="${safe(w.userId, '')}"><i class="fas fa-eye"></i> Review</button>
+              </td>
+            `;
+            withdrawalsTable.appendChild(row);
+          });
+
+          // listeners
+          document.querySelectorAll('.view-withdrawal').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const wid = btn.getAttribute('data-id');
+              const uid = btn.getAttribute('data-userid');
+              if (uid && wid) viewWithdrawal(uid, wid);
+              else showStatus('Invalid withdrawal reference', 'err');
+            });
+          });
+        }
+
+        setupPagination('withdrawals-pagination', page, totalPages, loadWithdrawals);
+      }).catch(err => {
+        console.error('Error loading withdrawals:', err);
+        withdrawalsTable.innerHTML = '<tr><td colspan="9" style="text-align:center">Error loading withdrawals</td></tr>';
+      });
+    }
+
+    // View withdrawal
+    function viewWithdrawal(userId, withdrawalId) {
+      database.ref(`withdrawals/${userId}/${withdrawalId}`).once('value').then(snap => {
+        const w = (snap && snap.val()) || null;
+        if (!w) {
+          showStatus('Withdrawal not found', 'err');
+          return;
+        }
+        currentWithdrawalId = withdrawalId;
+        document.getElementById('modal-withdrawal-userid').value = safe(userId);
+        document.getElementById('modal-withdrawal-username').value = safe(w.userName, 'Unknown User');
+        document.getElementById('modal-withdrawal-email').value = safe(w.userEmail);
+        document.getElementById('modal-withdrawal-method').value = safe((w.method || '').toString().toUpperCase(), 'N/A');
+        document.getElementById('modal-withdrawal-method-details').innerHTML = formatMethodDetails(w.method, w.methodDetails || {});
+        document.getElementById('modal-withdrawal-amount').value = `₹${safe(w.amount, 0)}`;
+        document.getElementById('modal-withdrawal-status').value = w.status || 'requested';
+        document.getElementById('modal-withdrawal-requested').value = formatDate(w.requestedAt);
+        document.getElementById('withdrawal-modal').classList.add('show');
+      }).catch(err => {
+        console.error('Error loading withdrawal:', err);
+        showStatus('Error loading withdrawal details', 'err');
+      });
+    }
+
+    // Save withdrawal changes
+    document.getElementById('btn-save-withdrawal').addEventListener('click', () => {
+      if (!currentWithdrawalId) {
+        showStatus('No withdrawal selected', 'err');
+        return;
+      }
+      const status = document.getElementById('modal-withdrawal-status')?.value || 'requested';
+
+      // find owner
+      database.ref('withdrawals').once('value').then(snapshot => {
+        let ownerId = null;
+        if (snapshot) {
+          snapshot.forEach(userSnapshot => {
+            if (userSnapshot.hasChild && userSnapshot.hasChild(currentWithdrawalId)) {
+              ownerId = userSnapshot.key;
+            }
+          });
+        }
+        if (!ownerId) {
+          showStatus('Error: Could not find withdrawal owner', 'err');
+          return;
+        }
+
+        const updates = {
+          status: status,
+          processedAt: (status === 'completed' || status === 'rejected') ? Date.now() : null
+        };
+
+        database.ref(`withdrawals/${ownerId}/${currentWithdrawalId}`).update(updates)
+          .then(() => {
+            showStatus('Withdrawal updated successfully', 'ok');
+            document.getElementById('withdrawal-modal').classList.remove('show');
+            loadWithdrawals(currentWithdrawalsPage);
+            loadDashboardData();
+          })
+          .catch(err => {
+            console.error('Error updating withdrawal:', err);
+            showStatus('Error updating withdrawal', 'err');
+          });
+      }).catch(err => {
+        console.error('Error finding withdrawal owner:', err);
+        showStatus('Error updating withdrawal', 'err');
+      });
+    });
+
+    /**************************************************************************
+     * MESSAGES
+     **************************************************************************/
+    function loadMessages(page = 1) {
+      currentMessagesPage = page;
+      const messagesTable = document.getElementById('messages-table-body');
+      messagesTable.innerHTML = '<tr><td colspan="7" style="text-align:center">Loading messages...</td></tr>';
+
+      database.ref('contactMessages').once('value').then(snapshot => {
+        const messages = [];
+        if (snapshot) {
+          snapshot.forEach(ms => {
+            const m = (ms.val && ms.val()) || {};
+            m.id = ms.key;
+            messages.push(m);
+          });
+        }
+
+        const searchTerm = (document.getElementById('message-search')?.value || '').toLowerCase();
+        const filtered = searchTerm ? messages.filter(m =>
+          ((m.name || '').toLowerCase().includes(searchTerm)) ||
+          ((m.email || '').toLowerCase().includes(searchTerm)) ||
+          ((m.company || '').toLowerCase().includes(searchTerm)) ||
+          ((m.message || '').toLowerCase().includes(searchTerm))
+        ) : messages;
+
+        filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+        const startIndex = (page - 1) * itemsPerPage;
+        const paginated = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+        messagesTable.innerHTML = '';
+        if (paginated.length === 0) {
+          messagesTable.innerHTML = '<tr><td colspan="7" style="text-align:center">No messages found</td></tr>';
+        } else {
+          paginated.forEach(m => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${safe(m.name)}</td>
+              <td>${safe(m.company)}</td>
+              <td>${safe(m.email)}</td>
+              <td>${m.message ? (m.message.length > 50 ? m.message.substring(0, 50) + '...' : m.message) : 'N/A'}</td>
+              <td>${formatDate(m.timestamp)}</td>
+              <td>${m.read ? '<span class="badge badge-success">Read</span>' : '<span class="badge badge-warning">Unread</span>'}</td>
+              <td>
+                <button class="action-btn btn-view view-message" data-id="${safe(m.id, '')}"><i class="fas fa-eye"></i> View</button>
+              </td>
+            `;
+            messagesTable.appendChild(row);
+          });
+
+          // view-message listeners (expand to open modal if you want)
+          document.querySelectorAll('.view-message').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const mid = btn.getAttribute('data-id');
+              showStatus('View message: ' + mid, 'ok');
+            });
+          });
+        }
+
+        setupPagination('messages-pagination', page, totalPages, loadMessages);
+      }).catch(err => {
+        console.error('Error loading messages:', err);
+        messagesTable.innerHTML = '<tr><td colspan="7" style="text-align:center">Error loading messages</td></tr>';
+      });
+    }
+
+    // Mark all read (example action)
+    document.getElementById('btn-mark-all-read').addEventListener('click', () => {
+      database.ref('contactMessages').once('value').then(snap => {
+        const updates = {};
+        snap.forEach(ms => {
+          updates[ms.key + '/read'] = true;
+        });
+        return database.ref('contactMessages').update(updates);
+      }).then(() => {
+        showStatus('All messages marked read', 'ok');
+        loadMessages();
+        loadDashboardData();
+      }).catch(err => {
+        console.error('Error marking messages read:', err);
+        showStatus('Failed to mark read', 'err');
+      });
+    });
+
+    /**************************************************************************
+     * BRANDS & CAMPAIGNS (placeholders)
+     **************************************************************************/
+    function loadBrands() {
+      // Placeholder static content; replace with DB-powered code if you have brands in DB
+      document.getElementById('brands-table-body').innerHTML = `
+        <tr><td>Nike</td><td>Global sportswear brand</td><td>Sports & Fitness</td><td>12</td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+        <tr><td>Apple</td><td>Technology company</td><td>Electronics</td><td>8</td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+        <tr><td>Coca-Cola</td><td>Beverage company</td><td>Food & Beverage</td><td>15</td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+      `;
+    }
+
+    function loadCampaigns() {
+      document.getElementById('campaigns-table-body').innerHTML = `
+        <tr><td>Nike</td><td>Air Max Launch</td><td>₹15,000</td><td>Create a reel showcasing the new Air Max shoes</td><td><span class="badge badge-success">Active</span></td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+        <tr><td>Apple</td><td>iPhone 15 Review</td><td>₹25,000</td><td>Create an unboxing and review video of the new iPhone</td><td><span class="badge badge-success">Active</span></td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+        <tr><td>Coca-Cola</td><td>Summer Campaign</td><td>₹10,000</td><td>Create a post showing how you enjoy Coca-Cola in summer</td><td><span class="badge badge-warning">Inactive</span></td><td>
+          <button class="action-btn btn-edit"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+        </td></tr>
+      `;
+    }
+
+    /**************************************************************************
+     * Pagination helper
+     **************************************************************************/
+    function setupPagination(elementId, currentPage, totalPages, callback) {
+      const paginationEl = document.getElementById(elementId);
+      if (!paginationEl) return;
+      paginationEl.innerHTML = '';
+
+      if (!totalPages || totalPages <= 1) return;
+
+      // Prev
+      if (currentPage > 1) {
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '&laquo;';
+        prevBtn.addEventListener('click', () => callback(currentPage - 1));
+        paginationEl.appendChild(prevBtn);
+      }
+
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + 4);
+
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        if (i === currentPage) pageBtn.classList.add('active');
+        pageBtn.addEventListener('click', () => callback(i));
+        paginationEl.appendChild(pageBtn);
+      }
+
+      // Next
+      if (currentPage < totalPages) {
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '&raquo;';
+        nextBtn.addEventListener('click', () => callback(currentPage + 1));
+        paginationEl.appendChild(nextBtn);
+      }
+    }
+
+    /**************************************************************************
+     * Search inputs & small UI helpers
+     **************************************************************************/
+    document.getElementById('user-search').addEventListener('input', () => loadUsers(1));
+    document.getElementById('submission-search').addEventListener('input', () => loadSubmissions(1));
+    document.getElementById('submission-filter').addEventListener('change', () => loadSubmissions(1));
+    document.getElementById('withdrawal-search').addEventListener('input', () => loadWithdrawals(1));
+    document.getElementById('withdrawal-filter').addEventListener('change', () => loadWithdrawals(1));
+    document.getElementById('message-search').addEventListener('input', () => loadMessages(1));
+    document.getElementById('btn-refresh-users').addEventListener('click', () => loadUsers(currentUsersPage));
+
+    // Add brand / add campaign modals
+    document.getElementById('btn-add-brand').addEventListener('click', () => {
+      document.getElementById('brand-modal-title').textContent = 'Add New Brand';
+      document.getElementById('brand-name').value = '';
+      document.getElementById('brand-description').value = '';
+      document.getElementById('brand-category').value = '';
+      document.getElementById('brand-modal').classList.add('show');
+    });
+    document.getElementById('btn-add-campaign').addEventListener('click', () => {
+      document.getElementById('campaign-modal-title').textContent = 'Add New Campaign';
+      document.getElementById('campaign-title').value = '';
+      document.getElementById('campaign-payout').value = '';
+      document.getElementById('campaign-requirements').value = '';
+      document.getElementById('campaign-status').value = 'active';
+      document.getElementById('campaign-modal').classList.add('show');
+    });
+
+    // Initialize password toggle
+    setupPasswordToggle('admin-pass-toggle', 'admin-pass');
+
+    // Check auth on page load
+    auth.onAuthStateChanged(user => {
+      if (user && user.email && user.email.toLowerCase() === 'rudrchauhan877@gmail.com') {
+        currentUser = user;
+        document.getElementById('admin-login').style.display = 'none';
+        document.getElementById('admin-dashboard').style.display = 'block';
+        document.getElementById('nav-logout').style.display = 'list-item';
+        loadDashboardData();
+      } else {
+        // not signed in as admin
+        document.getElementById('admin-login').style.display = 'block';
+        document.getElementById('admin-dashboard').style.display = 'none';
+        document.getElementById('nav-logout').style.display = 'none';
+      }
+    });
+
+    // On initial open, keep dashboard hidden until admin logs in
+    document.getElementById('admin-dashboard').style.display = 'none';
+  </script>
+</body>
+</html>
