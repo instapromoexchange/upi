@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin — Withdrawals</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <style>
+    :root{--primary:#4361ee;--accent:#10b981;--danger:#ef4444;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:#f6f8ff;margin:0;color:#111}
+    header{background:linear-gradient(135deg,var(--primary),#3a0ca3);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center}
+    header h1{font-size:1.05rem;margin:0}
+    .container{max-width:1100px;margin:18px auto;padding:0 14px}
+    .card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 8px 20px rgba(0,0,0,.06);margin-bottom:16px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    .fc{padding:10px;border-radius:10px;border:1px solid #e6e9f2;background:#fff}
+    .btn{padding:8px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-success{background:var(--accent);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eef2ff;text-align:left;font-size:0.95rem}
+    th{background:#fbfbff;font-weight:800}
+    tr:hover{background:#fbfdff}
+    .badge{padding:4px 8px;border-radius:8px;font-weight:700;font-size:12px}
+    .badge-requested{background:#fff4ce;color:#92400e}
+    .badge-completed{background:#d1fae5;color:#065f46}
+    .badge-rejected{background:#fee2e2;color:#991b1b}
+    .method-preview{font-size:0.9rem;color:var(--muted)}
+    .pagination{display:flex;gap:6px;justify-content:center;margin-top:12px}
+    .pagination button{padding:6px 8px;border-radius:8px;border:1px solid #e6e9f2;background:#fff;cursor:pointer}
+    .pagination button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    /* modal */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center}
+    .modal.show{display:flex}
+    .modal-box{background:#fff;border-radius:12px;padding:18px;width:92%;max-width:680px;max-height:88vh;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .modal-close{background:none;border:0;font-size:20px;cursor:pointer}
+    .method-details p{margin:6px 0}
+    .toast{position:fixed;right:18px;bottom:18px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.2);display:none;z-index:2000}
+    @media (max-width:640px){ .controls{flex-direction:column;align-items:stretch} }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><i class="fa-solid fa-money-bill-wave"></i> Withdrawals — Admin</h1>
+    <div style="opacity:0.9;font-weight:700">Project: exchange-a725e</div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="controls">
+        <input id="search" class="fc" placeholder="Search by user id, name, upi/account..." />
+        <select id="statusFilter" class="fc" style="max-width:180px">
+          <option value="all">All status</option>
+          <option value="requested">Requested</option>
+          <option value="processing">Processing</option>
+          <option value="completed">Completed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+        <div style="margin-left:auto;color:var(--muted)">Showing <span id="countDisplay">0</span> withdrawals</div>
+      </div>
+
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Name</th>
+              <th>Method</th>
+              <th>Method Details</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Requested</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Withdrawal Details</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+
+      <div class="fg"><label>User ID</label><input id="modalUserId" class="fc" readonly></div>
+      <div class="fg"><label>Name</label><input id="modalName" class="fc" readonly></div>
+      <div class="fg"><label>Method</label><input id="modalMethod" class="fc" readonly></div>
+
+      <div class="fg"><label>Method Details</label><div id="modalMethodDetails" class="method-details"></div></div>
+
+      <div class="fg"><label>Amount (₹)</label><input id="modalAmount" class="fc" readonly></div>
+
+      <div class="fg"><label>Status</label>
+        <select id="modalStatus" class="fc">
+          <option value="requested">Requested</option>
+          <option value="processing">Processing</option>
+          <option value="completed">Completed</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      <div class="fg"><label>Requested At</label><input id="modalRequested" class="fc" readonly></div>
+
+      <button id="saveBtn" class="btn btn-success" style="width:100%">Save Changes</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
+
+  <script>
+    /********************** Firebase config ************************
+     * This uses your project's config from earlier conversation.
+     * If you want to use a different project, replace these values.
+     ***************************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyBm4VTr__mag1trF4jPZCgqt7gWwBItD58",
+      authDomain: "exchange-a725e.firebaseapp.com",
+      databaseURL: "https://exchange-a725e-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "exchange-a725e",
+      storageBucket: "exchange-a725e.firebasestorage.app",
+      messagingSenderId: "47165517524",
+      appId: "1:47165517524:web:7712aae884de7a498a1541"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // helpers
+    function safe(v, d = 'N/A') { return (v === undefined || v === null || v === '') ? d : v; }
+    function showToast(msg, time = 2500) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, time);
+    }
+    function formatDate(ts) {
+      if (!ts) return '-';
+      const n = Number(ts);
+      const d = isNaN(n) ? new Date(ts) : new Date(n);
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    }
+    function getStatusBadge(s) {
+      const st = (s || '').toString().toLowerCase();
+      if (st === 'requested' || st === 'pending') return `<span class="badge badge-requested">Requested</span>`;
+      if (st === 'processing') return `<span class="badge badge-requested">Processing</span>`;
+      if (st === 'completed' || st === 'approved') return `<span class="badge badge-completed">Completed</span>`;
+      if (st === 'rejected') return `<span class="badge badge-rejected">Rejected</span>`;
+      return `<span class="badge">${safe(s)}</span>`;
+    }
+
+    // Flexible method details formatter
+    function formatMethodDetails(method, details) {
+      if (!details || typeof details !== 'object') return '<p>No details</p>';
+      const m = (method || '').toString().toLowerCase();
+      // helper: pick first key present
+      function pick(obj, keys) {
+        for (const k of keys) {
+          if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
+        }
+        return null;
+      }
+
+      // If details nested under methodDetails property (sometimes)
+      const d = (details.methodDetails && typeof details.methodDetails === 'object') ? details.methodDetails : details;
+
+      let html = '';
+      if (m.includes('upi')) {
+        const upiName = pick(d, ['name', 'upiName', 'accountName', 'account_holder', 'accountHolder']);
+        const upiId = pick(d, ['upiid', 'upiId', 'upi', 'vpa', 'upi_id']);
+        const phone = pick(d, ['phone', 'mobile', 'contact']);
+        html += `<p><strong>UPI Name:</strong> ${safe(upiName)}</p>`;
+        html += `<p><strong>UPI ID:</strong> ${safe(upiId)}</p>`;
+        if (phone) html += `<p><strong>Phone:</strong> ${safe(phone)}</p>`;
+      } else if (m.includes('bank')) {
+        const accName = pick(d, ['name', 'accountName', 'account_name', 'accountHolder', 'account_holder']);
+        const accNumber = pick(d, ['account', 'accountNumber', 'account_number', 'accNo', 'acc_no']);
+        const ifsc = pick(d, ['ifsc', 'ifscCode', 'ifsc_code']);
+        const bankName = pick(d, ['bank', 'bankName', 'bank_name']);
+        const phone = pick(d, ['phone', 'mobile', 'contact']);
+        if (accName) html += `<p><strong>Account Holder:</strong> ${safe(accName)}</p>`;
+        html += `<p><strong>Account Number:</strong> ${safe(accNumber)}</p>`;
+        if (ifsc) html += `<p><strong>IFSC:</strong> ${safe(ifsc)}</p>`;
+        if (bankName) html += `<p><strong>Bank:</strong> ${safe(bankName)}</p>`;
+        if (phone) html += `<p><strong>Phone:</strong> ${safe(phone)}</p>`;
+      } else if (m.includes('paypal')) {
+        const email = pick(d, ['email', 'paypalEmail', 'paypal_email']);
+        html += `<p><strong>PayPal Email:</strong> ${safe(email)}</p>`;
+      } else {
+        // generic: list common keys first then any others
+        const common = ['name', 'email', 'phone', 'mobile', 'account', 'accountNumber', 'ifsc', 'upi', 'upiid'];
+        for (const k of common) if (d[k] !== undefined) html += `<p><strong>${k}:</strong> ${safe(d[k])}</p>`;
+        for (const k in d) if (Object.prototype.hasOwnProperty.call(d, k) && !common.includes(k)) html += `<p><strong>${k}:</strong> ${safe(d[k])}</p>`;
+      }
+      return html || '<p>No details</p>';
+    }
+
+    /***************** Data load & UI *****************/
+    let allWithdrawals = []; // flat array of {userId, id, ...fields}
+    const itemsPerPage = 8;
+    let currentPage = 1;
+
+    async function loadWithdrawals() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Loading...</td></tr>`;
+      try {
+        const snap = await db.ref('withdrawals').once('value');
+        const list = [];
+        snap.forEach(userSnap => {
+          const uid = userSnap.key;
+          userSnap.forEach(wdSnap => {
+            const w = wdSnap.val() || {};
+            w.id = wdSnap.key;
+            w.userId = uid;
+            // sometimes methodDetails may be nested under a field 'methodDetails'
+            list.push(w);
+          });
+        });
+        // save
+        allWithdrawals = list.sort((a,b) => {
+          const ta = Number(a.timestamp || a.createdAt || 0);
+          const tb = Number(b.timestamp || b.createdAt || 0);
+          return tb - ta;
+        });
+        currentPage = 1;
+        renderTable();
+        document.getElementById('countDisplay').textContent = allWithdrawals.length;
+      } catch (err) {
+        console.error('Load error', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--danger)">Error loading withdrawals</td></tr>`;
+        showToast('Error loading withdrawals: ' + (err.message || err));
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const search = (document.getElementById('search').value || '').toLowerCase().trim();
+      const statusFilter = (document.getElementById('statusFilter').value || 'all').toLowerCase();
+
+      let filtered = allWithdrawals.filter(w => {
+        // build searchable text
+        const text = [
+          w.userId || '',
+          w.name || '',
+          w.method || '',
+          (w.upiid || w.upi || (w.methodDetails && w.methodDetails.upiid) || '') ,
+          (w.account || (w.methodDetails && (w.methodDetails.account || w.methodDetails.accountNumber)) || '')
+        ].join(' ').toLowerCase();
+        const matchesSearch = !search || text.includes(search);
+        const matchesStatus = statusFilter === 'all' || ((w.status || '').toLowerCase() === statusFilter);
+        return matchesSearch && matchesStatus;
+      });
+
+      const total = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(total / itemsPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * itemsPerPage;
+      const pageItems = filtered.slice(start, start + itemsPerPage);
+
+      // render rows
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">No withdrawals found</td></tr>`;
+      } else {
+        tbody.innerHTML = '';
+        pageItems.forEach(w => {
+          // method preview
+          let preview = '';
+          if ((w.method || '').toLowerCase().includes('upi')) {
+            preview = safe(w.upiid || w.upi || (w.methodDetails && (w.methodDetails.upiid || w.methodDetails.upi)));
+          } else if ((w.method || '').toLowerCase().includes('bank')) {
+            preview = safe(w.account || (w.methodDetails && (w.methodDetails.account || w.methodDetails.accountNumber)));
+          } else {
+            preview = safe(w.email || w.phone || '');
+          }
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${safe(w.userId)}</td>
+            <td>${safe(w.name)}</td>
+            <td>${safe(w.method)}</td>
+            <td class="method-preview">${preview}</td>
+            <td>₹${safe(w.amount, 0)}</td>
+            <td>${getStatusBadge(w.status)}</td>
+            <td>${formatDate(w.timestamp || w.createdAt)}</td>
+            <td><button class="btn btn-primary" data-id="${w.id}" data-uid="${w.userId}"><i class="fa-solid fa-eye"></i> View</button></td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        // attach view handlers
+        tbody.querySelectorAll('button.btn-primary').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const uid = btn.getAttribute('data-uid');
+            const obj = allWithdrawals.find(x => x.id === id && x.userId === uid);
+            if (obj) openModal(obj);
+          });
+        });
+      }
+
+      // pagination
+      const pagEl = document.getElementById('pagination');
+      pagEl.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const b = document.createElement('button');
+        b.textContent = i;
+        if (i === currentPage) b.classList.add('active');
+        b.addEventListener('click', () => { currentPage = i; renderTable(); });
+        pagEl.appendChild(b);
+      }
+
+      document.getElementById('countDisplay').textContent = total;
+    }
+
+    // search/filter events
+    document.getElementById('search').addEventListener('input', () => { currentPage = 1; renderTable(); });
+    document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+    document.getElementById('refreshBtn').addEventListener('click', () => loadWithdrawals());
+
+    /**************** Modal logic ****************/
+    const modal = document.getElementById('modal');
+    const modalClose = document.getElementById('modalClose');
+    function openModal(w) {
+      // populate
+      document.getElementById('modalUserId').value = safe(w.userId, '');
+      document.getElementById('modalName').value = safe(w.name, '');
+      document.getElementById('modalMethod').value = safe(w.method, '');
+      // choose details source (prefers nested methodDetails if exists)
+      const detailsSource = (w.methodDetails && typeof w.methodDetails === 'object') ? w.methodDetails : w;
+      document.getElementById('modalMethodDetails').innerHTML = formatMethodDetails(w.method, detailsSource);
+      document.getElementById('modalAmount').value = safe(w.amount, 0);
+      document.getElementById('modalStatus').value = safe(w.status, 'requested');
+      document.getElementById('modalRequested').value = formatDate(w.timestamp || w.createdAt);
+      // store current selected
+      modal.dataset.currentUser = w.userId;
+      modal.dataset.currentId = w.id;
+      modal.classList.add('show');
+    }
+    modalClose.addEventListener('click', () => modal.classList.remove('show'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+
+    // Save changes (update status)
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const uid = modal.dataset.currentUser;
+      const id = modal.dataset.currentId;
+      const newStatus = document.getElementById('modalStatus').value;
+      if (!uid || !id) { showToast('Invalid withdrawal'); return; }
+      try {
+        await db.ref(`withdrawals/${uid}/${id}`).update({ status: newStatus });
+        showToast('Status updated');
+        modal.classList.remove('show');
+        // update local copy
+        const item = allWithdrawals.find(x => x.userId === uid && x.id === id);
+        if (item) item.status = newStatus;
+        renderTable();
+      } catch (err) {
+        console.error('Update error', err);
+        showToast('Error updating: ' + (err.message || err));
+      }
+    });
+
+    /**************** Init *****************/
+    loadWithdrawals();
+  </script>
+</body>
+</html>
